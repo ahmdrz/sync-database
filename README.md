@@ -24,7 +24,8 @@ I upload this code just for keep it on clouds. If you want to use it , First of 
   "servertolocal": true,
   "tables": [
     {
-      "name": "<table>"
+      "name": "<table>",
+      "column" : "<checkConflictColumns>"
     }
   ]
 }
