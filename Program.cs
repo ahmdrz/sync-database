@@ -8,12 +8,13 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.IO;
+using System.Globalization;
 
-namespace SyncIntHome
+namespace SyncDatabases
 {
     class Program
     {
-        public struct Table 
+        public struct Table
         {
             public string name;
         }
@@ -32,7 +33,7 @@ namespace SyncIntHome
         static void Main(string[] args)
         {
             Console.ForegroundColor = ConsoleColor.White;
-            Console.WriteLine("Starting...");            
+            Console.WriteLine("Starting...");
             Console.WriteLine("Reading files...");
             Config config = new Config();
             try
@@ -54,7 +55,7 @@ namespace SyncIntHome
             Console.Read();
         }
 
-        private static void Sync(string table,bool ServerToLocal)
+        private static void Sync(string table, bool ServerToLocal)
         {
             List<string> list = new List<string>();
             string server = ServerToLocal ? serverConnectionString : localConnectionString;
@@ -80,9 +81,9 @@ namespace SyncIntHome
                         else if (value.GetType() == typeof(string))
                             value = "'" + value + "'";
                         else if (value.GetType() == typeof(DateTime))
-                            value = "'" + DateTime.Parse(value.ToString()).ToShortDateString() + "'";
-                        temp += value + (i < reader.FieldCount - 1 ? "," : "");                        
-                    }   
+                            value = "CAST('" + DateTime.Parse(value.ToString()).ToString("MM/dd/yyyy HH:mm:ss",CultureInfo.InvariantCulture) +"' AS DATETIME)";
+                        temp += value + (i < reader.FieldCount - 1 ? "," : "");
+                    } 
                     temp += ");";
                     list.Add(temp);
                 }
@@ -99,6 +100,8 @@ namespace SyncIntHome
             Console.WriteLine("Uploading " + table + " information...");
             for (int i = 0; i < list.Count; i++)
             {
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.WriteLine(list[i]);
                 try
                 {
                     SqlConnection con = new SqlConnection(local);
