@@ -73,7 +73,16 @@ namespace SyncIntHome
                 {
                     string temp = "insert into " + table + " values(";
                     for (int i = 0; i < reader.FieldCount; i++)
-                        temp += reader.GetValue(i) + (i < reader.FieldCount - 1 ? "," : "");
+                    {
+                        object value = reader.GetValue(i);
+                        if (value.GetType() == typeof(bool))
+                            value = value.Equals(true) ? 1 : 0;
+                        else if (value.GetType() == typeof(string))
+                            value = "'" + value + "'";
+                        else if (value.GetType() == typeof(DateTime))
+                            value = "'" + DateTime.Parse(value.ToString()).ToShortDateString() + "'";
+                        temp += value + (i < reader.FieldCount - 1 ? "," : "");                        
+                    }   
                     temp += ");";
                     list.Add(temp);
                 }
