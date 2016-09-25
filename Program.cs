@@ -64,12 +64,12 @@ namespace SyncIntHome
 
         private static void Sync(string table, string column, bool ServerToLocal)
         {
-            List<Query> list = new List<Query>();            
+            List<Query> list = new List<Query>();
             string server = ServerToLocal ? serverConnectionString : localConnectionString;
             string local = ServerToLocal ? localConnectionString : serverConnectionString;
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine("Getting " + table + " information...");
-            SqlConnection con = new SqlConnection();            
+            SqlConnection con = new SqlConnection();
             try
             {
                 con = new SqlConnection(server);
@@ -108,7 +108,7 @@ namespace SyncIntHome
             }
             finally
             {
-                con.Close();                
+                con.Close();
             }
 
             Console.WriteLine("Checking " + table + " information...");
@@ -133,6 +133,12 @@ namespace SyncIntHome
                 }
                 reader.Close();
 
+                if (shouldRemoved.Count >= list.Count)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Too many conflicts");
+                    return;
+                }
                 for (int i = 0; i < shouldRemoved.Count; i++)
                     list.RemoveAt(shouldRemoved[i]);
             }
@@ -144,7 +150,7 @@ namespace SyncIntHome
             }
             finally
             {
-                con.Close();                
+                con.Close();
             }
 
             Console.ForegroundColor = ConsoleColor.Yellow;
