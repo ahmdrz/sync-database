@@ -6,10 +6,11 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 using System.IO;
 using System.Globalization;
+using Newtonsoft.Json; // Install-Package Newtonsoft.Json
 
+// Namespace... 
 namespace SyncDatabases
 {
     class Program
@@ -19,7 +20,7 @@ namespace SyncDatabases
             public string column;
             public string query;
         }
-
+        
         public struct Table
         {
             public string name;
@@ -42,6 +43,7 @@ namespace SyncDatabases
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("Starting...");
             Console.WriteLine("Reading files...");
+            // This try-catch statement will read configuration file and will call Sync method.
             Config config = new Config();
             try
             {
@@ -49,6 +51,7 @@ namespace SyncDatabases
                 config = JsonConvert.DeserializeObject<Config>(result);
                 serverConnectionString = config.server;
                 localConnectionString = config.local;
+                // For each tables, According to column , Program will execute the query...
                 for (int i = 0; i < config.tables.Length; i++)
                 {
                     Console.ForegroundColor = ConsoleColor.Blue;
@@ -66,12 +69,15 @@ namespace SyncDatabases
             Console.Read();
         }
 
+        // Honestly this is the main function.
+        // This function will Sync two databases , Actually two tables if the column value isn't exists.
         private static void Sync(string table, string column, bool ServerToLocal)
         {
             List<Query> list = new List<Query>();
             string server = ServerToLocal ? serverConnectionString : localConnectionString;
             string local = ServerToLocal ? localConnectionString : serverConnectionString;
             Console.ForegroundColor = ConsoleColor.Yellow;
+            // Let's get all of records from the table which we need to receive datas from.
             Console.WriteLine("Getting " + table + " information...");
             SqlConnection con = new SqlConnection();
             try
@@ -115,6 +121,7 @@ namespace SyncDatabases
                 con.Close();
             }
 
+            // And then check the records for conflicts...
             Console.WriteLine("Checking " + table + " information...");
             try
             {
@@ -137,12 +144,14 @@ namespace SyncDatabases
                 }
                 reader.Close();
 
+                // Logic Error !!!
                 if (shouldRemoved.Count >= list.Count)
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine("Too many conflicts");
                     return;
                 }
+                // Removing conflicts from list.
                 for (int i = 0; i < shouldRemoved.Count; i++)
                     list.RemoveAt(shouldRemoved[i]);
             }
@@ -156,7 +165,8 @@ namespace SyncDatabases
             {
                 con.Close();
             }
-
+            
+            // And then let's execute queries.
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine("Uploading " + table + " information...");
             for (int i = 0; i < list.Count; i++)
