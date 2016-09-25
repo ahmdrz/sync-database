@@ -4,7 +4,8 @@
   "servertolocal": true,
   "tables": [
     {
-      "name": "<table>"
+      "name": "<table>",
+      "column": "<checkConflictColumn>"
     }
   ]
 }
