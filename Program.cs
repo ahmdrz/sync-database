@@ -10,10 +10,16 @@ using Newtonsoft.Json;
 using System.IO;
 using System.Globalization;
 
-namespace SyncDatabases
+namespace SyncIntHome
 {
     class Program
     {
+        public struct Query
+        {
+            public string column;
+            public string query;
+        }
+
         public struct Table
         {
             public string name;
@@ -44,7 +50,7 @@ namespace SyncDatabases
                 serverConnectionString = config.server;
                 localConnectionString = config.local;
                 for (int i = 0; i < config.tables.Length; i++)
-                    Sync(config.tables[i].name,config.tables[i].column, config.servertolocal);
+                    Sync(config.tables[i].name, config.tables[i].column, config.servertolocal);
             }
             catch (Exception e)
             {
@@ -56,16 +62,17 @@ namespace SyncDatabases
             Console.Read();
         }
 
-        private static void Sync(string table,string column, bool ServerToLocal)
+        private static void Sync(string table, string column, bool ServerToLocal)
         {
-            List<string> list = new List<string>();
+            List<Query> list = new List<Query>();            
             string server = ServerToLocal ? serverConnectionString : localConnectionString;
             string local = ServerToLocal ? localConnectionString : serverConnectionString;
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine("Getting " + table + " information...");
+            SqlConnection con = new SqlConnection();            
             try
             {
-                SqlConnection con = new SqlConnection(server);
+                con = new SqlConnection(server);
                 SqlCommand cmd = new SqlCommand("select * from " + table + ";");
                 cmd.CommandType = CommandType.Text;
                 cmd.Connection = con;
@@ -73,6 +80,7 @@ namespace SyncDatabases
                 SqlDataReader reader = cmd.ExecuteReader();
                 while (reader.Read())
                 {
+                    Query query = new Query();
                     string temp = "insert into " + table + " values(";
                     for (int i = 0; i < reader.FieldCount; i++)
                     {
@@ -82,13 +90,14 @@ namespace SyncDatabases
                         else if (value.GetType() == typeof(string))
                             value = "'" + value + "'";
                         else if (value.GetType() == typeof(DateTime))
-                            value = "CAST('" + DateTime.Parse(value.ToString()).ToString("MM/dd/yyyy HH:mm:ss",CultureInfo.InvariantCulture) +"' AS DATETIME)";
+                            value = "CAST('" + DateTime.Parse(value.ToString()).ToString("MM/dd/yyyy HH:mm:ss", CultureInfo.InvariantCulture) + "' AS DATETIME)";
                         temp += value + (i < reader.FieldCount - 1 ? "," : "");
-                    } 
+                    }
                     temp += ");";
-                    list.Add(temp);
+                    query.query = temp;
+                    query.column = reader[column].ToString();
+                    list.Add(query);
                 }
-                con.Close();
                 reader.Close();
             }
             catch (Exception e)
@@ -97,6 +106,47 @@ namespace SyncDatabases
                 Console.WriteLine("Error occured [" + e.Message + "]");
                 return;
             }
+            finally
+            {
+                con.Close();                
+            }
+
+            Console.WriteLine("Checking " + table + " information...");
+            try
+            {
+                con = new SqlConnection(local);
+                SqlCommand cmd = new SqlCommand("select * from " + table + ";");
+                cmd.CommandType = CommandType.Text;
+                cmd.Connection = con;
+                con.Open();
+                SqlDataReader reader = cmd.ExecuteReader();
+                List<int> shouldRemoved = new List<int>();
+                while (reader.Read())
+                {
+                    for (int i = 0; i < list.Count; i++)
+                        if (reader[column].ToString() == list[i].column)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Cyan;
+                            Console.WriteLine("Conflict at " + i + " where " + column + " = " + list[i].column);
+                            shouldRemoved.Add(i);
+                        }
+                }
+                reader.Close();
+
+                for (int i = 0; i < shouldRemoved.Count; i++)
+                    list.RemoveAt(shouldRemoved[i]);
+            }
+            catch (Exception e)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Error occured [" + e.Message + "]");
+                return;
+            }
+            finally
+            {
+                con.Close();                
+            }
+
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine("Uploading " + table + " information...");
             for (int i = 0; i < list.Count; i++)
@@ -109,19 +159,22 @@ namespace SyncDatabases
                 Console.Write("\r" + "[" + (i + 1) + "/" + list.Count + "] : " + list[i]);
                 try
                 {
-                    SqlConnection con = new SqlConnection(local);
-                    SqlCommand cmd = new SqlCommand(list[i]);
+                    con = new SqlConnection(local);
+                    SqlCommand cmd = new SqlCommand(list[i].query);
                     cmd.CommandType = CommandType.Text;
                     cmd.Connection = con;
                     con.Open();
                     cmd.ExecuteScalar();
-                    con.Close();
                 }
                 catch (Exception e)
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine("Error occured [" + e.Message + "]");
                     break;
+                }
+                finally
+                {
+                    con.Close();
                 }
             }
             Console.WriteLine();
