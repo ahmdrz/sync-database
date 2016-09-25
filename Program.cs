@@ -10,7 +10,7 @@ using Newtonsoft.Json;
 using System.IO;
 using System.Globalization;
 
-namespace SyncIntHome
+namespace SyncDatabases
 {
     class Program
     {
@@ -50,7 +50,11 @@ namespace SyncIntHome
                 serverConnectionString = config.server;
                 localConnectionString = config.local;
                 for (int i = 0; i < config.tables.Length; i++)
+                {
+                    Console.ForegroundColor = ConsoleColor.Blue;
+                    Console.WriteLine("Syncing " + config.tables[i].name + " ...");
                     Sync(config.tables[i].name, config.tables[i].column, config.servertolocal);
+                }
             }
             catch (Exception e)
             {
@@ -162,7 +166,7 @@ namespace SyncIntHome
                 Console.SetCursorPosition(0, Console.CursorTop);
                 Console.Write(new string(' ', Console.WindowWidth));
                 Console.SetCursorPosition(0, current);
-                Console.Write("\r" + "[" + (i + 1) + "/" + list.Count + "] : " + list[i]);
+                Console.Write("\r" + "[" + (i + 1) + "/" + list.Count + "] : " + list[i].query);
                 try
                 {
                     con = new SqlConnection(local);
