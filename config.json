@@ -1,0 +1,10 @@
+{
+  "server": "<connectionstring>",
+  "local": "<connectionstring>",
+  "servertolocal": true,
+  "tables": [
+    {
+      "name": "<table>"
+    }
+  ]
+}
