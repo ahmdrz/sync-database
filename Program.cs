@@ -17,6 +17,7 @@ namespace SyncDatabases
         public struct Table
         {
             public string name;
+            public string column;
         }
 
         public struct Config
@@ -43,7 +44,7 @@ namespace SyncDatabases
                 serverConnectionString = config.server;
                 localConnectionString = config.local;
                 for (int i = 0; i < config.tables.Length; i++)
-                    Sync(config.tables[i].name, config.servertolocal);
+                    Sync(config.tables[i].name,config.tables[i].column, config.servertolocal);
             }
             catch (Exception e)
             {
@@ -55,7 +56,7 @@ namespace SyncDatabases
             Console.Read();
         }
 
-        private static void Sync(string table, bool ServerToLocal)
+        private static void Sync(string table,string column, bool ServerToLocal)
         {
             List<string> list = new List<string>();
             string server = ServerToLocal ? serverConnectionString : localConnectionString;
@@ -101,7 +102,11 @@ namespace SyncDatabases
             for (int i = 0; i < list.Count; i++)
             {
                 Console.ForegroundColor = ConsoleColor.Cyan;
-                Console.WriteLine(list[i]);
+                int current = Console.CursorTop;
+                Console.SetCursorPosition(0, Console.CursorTop);
+                Console.Write(new string(' ', Console.WindowWidth));
+                Console.SetCursorPosition(0, current);
+                Console.Write("\r" + "[" + (i + 1) + "/" + list.Count + "] : " + list[i]);
                 try
                 {
                     SqlConnection con = new SqlConnection(local);
@@ -119,6 +124,7 @@ namespace SyncDatabases
                     break;
                 }
             }
+            Console.WriteLine();
         }
     }
 }
