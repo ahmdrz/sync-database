@@ -32,3 +32,13 @@ I upload this code just for keep it on clouds. If you want to use it , First of 
 ```
 
 Replace your variables and save it to `config.json`
+
+
+### Attention 
+
+May have some problem with `nvarchar` data type.
+
+### ToDo
+
+1. Put it to a class
+2. Fix `nvarchar` problem , using `Parameterized Query` [read](https://msdn.microsoft.com/library/bb738521(v=vs.100).aspx)
