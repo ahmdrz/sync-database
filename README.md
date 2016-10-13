@@ -1,3 +1,5 @@
+# I love Golang -> [check this repository, It's better than this](http://github.com/ahmdrz/syncdb)
+
 # sync-database
 Very Very Simple Program to sync two databases.
 
